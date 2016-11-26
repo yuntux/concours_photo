@@ -1,0 +1,13 @@
+<?php
+$_PHOTO_DIRECTORY = "photos";
+$_VOTE_LIMIT = 2;
+$_TEST_MOD = 1;
+$_VOTES_FILE ='results.csv';
+$_USERS_FILE ='users.csv';
+$_URL = 'https://www.comaine.com/concours_photo/index.php';
+
+require('onfig.php'):
+$_SMTP_HOST = 'domain.com';
+$_SMTP_USERNAME = 'user';
+$_SMTP_PASSWORD = 'password';
+?>

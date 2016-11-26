@@ -2,44 +2,11 @@
 
 ///////////////////// PARAMETRES /////////////////////////
 
-$_PHOTO_DIRECTORY = "photos";
-$_VOTE_LIMIT = 2;
-$_TEST_MOD = 1;
+require('onfig.php'):
 $nb_photos = countFiles($_PHOTO_DIRECTORY);
-$_VOTES_FILE ='results.csv';
-$_URL = 'https://www.dumaine.me/concours_photo/index.php';
 $_USERS = array();
-$_USERS['g5tQ8XRq6m8E97cR']=array('nadiceam', False);
-$_USERS['2Egx25e9pP8qQP2Z']=array('fbrechet', False);
-$_USERS['J9h5PGt8Pc3np2U6']=array('schouikhi', False);
-$_USERS['NHAQ5kn4p9dZu339']=array('dcoq', False);
-$_USERS['UtkbHut27W864VH5']=array('mdiwani', False);
-$_USERS['5Br3Kca8sRBCs948']=array('adumaine', True);
-$_USERS['7kDEWn8y95F58vuZ']=array('ofafin', False);
-$_USERS['aN8Jk95ZcwPw53Z2']=array('pgedalge', False);
-$_USERS['4BDw4J8jkHW294xx']=array('dgelrubin', False);
-$_USERS['96eJ9rTB4QHxg23f']=array('lhersant', False);
-$_USERS['A82q45Zq3JrE9Msm']=array('fjekot', False);
-$_USERS['z3udLJB49i8EHq87']=array('gleguennec', False);
-$_USERS['TLDjqm4H6i85g84D']=array('clemoine', False);
-//$_USERS['V59z55Xxa2Q3FkFp']=array('aleymarie', False); //=>code de test diffusé
-$_USERS['f7u7Dpz2UN8i68WC']=array('aleymarie', False);
-$_USERS['7h5ZMfH4RcDt249v']=array('jmarrakchi', False);
-$_USERS['Z2f63Dts278qfGZQ']=array('bmazoyer', False);
-$_USERS['z57dS9Ge6bMg9L6Z']=array('tmidon', False);
-$_USERS['mHDu432Xy422TRur']=array('ymuller', False);
-$_USERS['f25y8YWig229EnUS']=array('hpourchot', False);
-$_USERS['hwsmHn7G9UBX4399']=array('jratier', False);
-$_USERS['5Ef5vdN74z7q2RSQ']=array('tsoumeillan', False);
-$_USERS['vTwP783Tkv6N4V4r']=array('wthis', False);
-$_USERS['JreE322m7NpuA94Q']=array('mvandeville', False);
-$_USERS['K87G74rzZ2Vs5dPs']=array('', False);
-$_USERS['2ggJzaH568R3z8EK']=array('', False);
-$_USERS['Wbn9nQ3S6qVx9K96']=array('', False);
-$_USERS['3C68fUVpX667ceHj']=array('', False);
-$_USERS['g64VgdbC98uB4T5Z']=array('', False);
-$_USERS['5W54sd7W3x3YELdu']=array('', False);
 
+date_default_timezone_set('Europe/Paris');
 //////////////////////////////////////////////////////////
 
 if ($_TEST_MOD==1){
@@ -50,6 +17,23 @@ if ($_TEST_MOD==1){
 header('Content-Type: text/html; charset=utf-8');
 
 /***************** MODEL *****************/
+function init_user_list(){
+    global $_USERS;
+    if (($handle = fopen($_USERS_FILE, "r")) !== FALSE) {
+        while (($data = fgetcsv($handle, 1000, ";")) !== FALSE) {
+            $hash = $data[0];
+            $login = $data[1];
+            $admin_bool = $data[3];
+			if ($admin_bool=="True")
+				$admin_bool=True;
+            $name = $data[2];
+			$temp=array($login,$admin_bool,$name);
+            $_USERS[$hash]=$temp;
+        }   
+        fclose($handle);
+    }
+}
+
 function exists_user(){
 	global $_USERS;
 	return array_key_exists(get_session_hash(), $_USERS);
@@ -65,31 +49,38 @@ function get_admin_status(){
 	return $_USERS[get_session_hash()][1];
 }
 
+function get_user_name(){
+	global $_USERS;
+	return $_USERS[get_session_hash()][2];
+}
+
+
+init_user_list()
+
 /***************** CONTROLER *****************/
 /*
 https://www.dumaine.me/concours_photos/index.php?action=vote&hash=5Br3Kca8sRBCs948
 */
 
 if (isset($_GET['action'])  && get_session_hash() && exists_user()){
-$admin_status = get_admin_status();
-if ($_GET['action']=='list_results' && $admin_status==True)
-	list_result();
-if ($_GET['action']=='count_results' && $admin_status==True)
-	count_result();
-if ($_GET['action']=='enroll' && $admin_status==True)
-	enroll();
-//if ($_GET['action']=='reminder' && $admin_status==True) //envoyer un mail de relance à ceux qui n'ont pas encore voté
-/*
-if ($_GET['action']=='vote'){
-	if (isset($_POST['submit'])){
-		add_vote();
-	}else{
-		display_form();
+	$admin_status = get_admin_status();
+	if ($_GET['action']=='list_results' && $admin_status==True)
+		list_result();
+	if ($_GET['action']=='count_results' && $admin_status==True)
+		count_result();
+	if ($_GET['action']=='enroll' && $admin_status==True)
+		enroll();
+	//if ($_GET['action']=='reminder' && $admin_status==True) //envoyer un mail de relance à ceux qui n'ont pas encore voté
+
+	if ($_GET['action']=='vote'){
+		if (isset($_POST['submit'])){
+			add_vote();
+		}else{
+			display_form();
+		}
 	}
-}
-*/
 } else {
-echo "Pas d'action, pas de hash ou utilsateur inconnu.";
+	echo "Pas d'action, pas de hash ou utilsateur inconnu.";
 }
 
 function get_session_hash(){
@@ -111,19 +102,28 @@ function list_result(){
 
 function send_enrolling_email($to, $hash){
 	global $_URL;
-	$message ="Bonjour,";
-	$message.="<br><br>Les votes pour le concours photos sont ouverts : <a href=\"".$_URL."?action=vote&hash=".$hash."\">lien vers le vote</a>.";
-	$message.="<br>Attention : ce lien vous est personnel. Merci de ne pas le diffuser.";
+	global $_SMTP_HOST;
+	global $_SMTP_USERNAME;
+	global $_SMTP_PASSWORD;
+
+	$message ="Bonjour ".get_user_name().",";
+	$message.="<br><br>Les votes pour le concours photos sont ouverts. <a href=\"".$_URL."?action=vote&hash=".$hash."\">Voici votre lien personnel de vote.</a>";
+
+	if (get_admin_status()) {
+		$message.="<br><br><b>Vous êtes administrateur :</b>";
+		$message.="<br><a href=\"".$_URL."?action=list_results&hash=".$hash."\">Voir l'historique des votes.</a>";
+		$message.="<br><a href=\"".$_URL."?action=count_results&hash=".$hash."\">Voir le classement.</a>";
+	}
 	$message.="<br><br>Cordialement.<br>La FunTeam";
 	require_once 'PHPMailer/PHPMailerAutoload.php';
 
 	$mail = new PHPMailer;
 	//$mail->SMTPDebug = 3;                               // Enable verbose debug output
 	$mail->isSMTP();                                      // Set mailer to use SMTP
-	$mail->Host = 'dumaine.me';  // Specify main and backup SMTP servers
+	$mail->Host = $_SMTP_HOST;  // Specify main and backup SMTP servers
 	$mail->SMTPAuth = true;                               // Enable SMTP authentication
-	$mail->Username = 'concoursphoto';                 // SMTP username
-	$mail->Password = 'WSL66Tv3qt3J9k2v';                           // SMTP password
+	$mail->Username = $_SMTP_USERNAME;                 // SMTP username
+	$mail->Password = $_SMTP_PASSWORD;                           // SMTP password
 	$mail->SMTPSecure = 'tls';                            // Enable TLS encryption, `ssl` also accepted
 	$mail->Port = 587;                                    // TCP port to connect to
 	$mail->setFrom('concoursphoto@dumaine.me', 'FunTeam');
@@ -131,6 +131,13 @@ function send_enrolling_email($to, $hash){
 	$mail->isHTML(true);                                  // Set email format to HTML
 	$mail->Subject = 'Concours photos';
 	$mail->Body    = $message;
+	$mail->SMTPOptions = array(
+		'ssl' => array(
+			'verify_peer' => false,
+			'verify_peer_name' => false,
+			'allow_self_signed' => true
+		)
+	);
 	if(!$mail->send()) {
 		echo '<br>Message could not be sent.';
 		echo '<br>Mailer Error: ' . $mail->ErrorInfo;
@@ -142,13 +149,11 @@ function send_enrolling_email($to, $hash){
 function enroll(){
 	global $_USERS;
 	foreach ($_USERS as $hash => $user_array) {
-/*
 		if ($user_array[0]=="adumaine"){
 			if ($user_array[0] != '') {
 				send_enrolling_email($user_array[0], $hash);	
 			}
 		}
-*/
 	}
 }
 
@@ -171,7 +176,7 @@ function count_result(){
 	}
 	$r = array();
 	foreach($user_votes as $key => $data){
-			for($k=0; $k<$_VOTE_LIMIT; $k++) { 
+			for($k=1; $k<1+$_VOTE_LIMIT; $k++) { 
 				if (array_key_exists($data[$k], $r)) {
 					$r[$data[$k]] = $r[$data[$k]] + 1;
 				} else {
@@ -179,6 +184,8 @@ function count_result(){
 				}
 			} 
 	}
+	natsort($r);
+	$r=array_reverse($r);
 	foreach($r as $key => $value){
 		echo $key . ' -> ' . $value . '<br>';
 	} 
@@ -235,8 +242,9 @@ echo '<html>
 	<form name="world" id="world" method="POST" action="'.$_URL.'?hash='.get_session_hash().'&action=vote">
 	<h1>Concours photos</h1>
 	Bonjour '.get_user_login().' !<br>
-	Sélectionnez '.strval($_VOTE_LIMIT).' photos (vote non ordonné), et validez le formulaire en bas de page.
-	<br>Vous pouvez voter plusieurs fois. Seul votre dernier vote sera pris en compte lors du dépouillement.
+	Sélectionnez exactement '.strval($_VOTE_LIMIT).' photos (vote non ordonné) en cochant la case à droite de la photo, et validez le formulaire en bas de page.
+    <br> Vous pouvez votez pour votre photo, même si ce n\'est pas très fair-play.
+	<br>Vous pouvez voter plusieurs fois. L\'historique de vos votes est conservé. Seul votre dernier vote sera pris en compte lors du dépouillement.
 	<br><br>
 	<table>';
 
