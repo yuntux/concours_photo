@@ -10,4 +10,6 @@ require('onfig.php'):
 $_SMTP_HOST = 'domain.com';
 $_SMTP_USERNAME = 'user';
 $_SMTP_PASSWORD = 'password';
+
+$VOTE_END_DATE = "2016-12-02 18:00:00";
 ?>
