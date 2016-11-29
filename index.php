@@ -107,7 +107,7 @@ function vote_closed_view(){
 	echo 'Le vote est fermé.';
 }
 function admin_required_view(){
-	echo 'Droits administrateur requis. Tu n\'est pas administrateur '.get_user_name().'. Il ne faut pas croire tout ce que tu lis dans tes emails. ;-)';
+	echo 'Droits administrateur requis. Tu n\'as pas de droits  administrateur '.get_user_name().'. Il ne faut pas croire tout ce que tu lis dans tes emails. ;-)';
 }
 function get_session_hash(){
 if (isset($_GET['hash']))
