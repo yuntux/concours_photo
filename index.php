@@ -71,12 +71,21 @@ https://www.dumaine.me/concours_photos/index.php?action=vote&hash=5Br3Kca8sRBCs9
 
 if (isset($_GET['action'])  && get_session_hash() && exists_user()){
 	$admin_status = get_admin_status();
-	if ($_GET['action']=='list_results' && $admin_status==True)
-		list_result();
-	if ($_GET['action']=='count_results' && $admin_status==True)
-		count_result();
-	if ($_GET['action']=='enroll' && $admin_status==True)
-		enroll();
+	if ($_GET['action']=='list_results')
+		if ($admin_status==True)
+			list_result();
+		else
+			admin_required_view();
+	if ($_GET['action']=='count_results')
+		if ($admin_status==True)
+			count_result();
+		else
+			admin_required_view();
+	if ($_GET['action']=='enroll')
+		if ($admin_status==True)
+			enroll();
+		else
+			admin_required_view();
 	//if ($_GET['action']=='reminder' && $admin_status==True) //envoyer un mail de relance à ceux qui n'ont pas encore voté
 
 	if ($_GET['action']=='vote'){
@@ -95,9 +104,11 @@ if (isset($_GET['action'])  && get_session_hash() && exists_user()){
 }
 
 function vote_closed_view(){
-	echo "Le vote est fermé.";
+	echo 'Le vote est fermé.';
 }
-
+function admin_required_view(){
+	echo 'Droits administrateur requis. Tu n\'est pas administrateur '.get_user_name().'. Il ne faut pas croire tout ce que tu lis dans tes emails. ;-)';
+}
 function get_session_hash(){
 if (isset($_GET['hash']))
 	return $_GET['hash'];
