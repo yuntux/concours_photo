@@ -2,11 +2,14 @@
 
 ///////////////////// PARAMETRES /////////////////////////
 
+date_default_timezone_set('Europe/Paris');
 require_once('./config.php');
 $nb_photos = countFiles($_PHOTO_DIRECTORY);
 $_USERS = array();
 
-date_default_timezone_set('Europe/Paris');
+$VOTE_END_DATE = strtotime($VOTE_END_DATE);
+$VOTE_END_DATE_STRING = date('d/m/Y à  H\hi',$VOTE_END_DATE);
+
 //////////////////////////////////////////////////////////
 
 if ($_TEST_MOD==1){
@@ -76,14 +79,22 @@ if (isset($_GET['action'])  && get_session_hash() && exists_user()){
 	//if ($_GET['action']=='reminder' && $admin_status==True) //envoyer un mail de relance à ceux qui n'ont pas encore voté
 
 	if ($_GET['action']=='vote'){
-		if (isset($_POST['submit'])){
-			add_vote();
-		}else{
-			display_form();
+		if ($VOTE_END_DATE < strtotime('now')) {
+			vote_closed_view();
+		} else { 
+			if (isset($_POST['submit'])){
+				add_vote();
+			}else{
+				display_form();
+			}
 		}
 	}
 } else {
 	echo "Pas d'action, pas de hash ou utilsateur inconnu.";
+}
+
+function vote_closed_view(){
+	echo "Le vote est fermé.";
 }
 
 function get_session_hash(){
@@ -108,13 +119,13 @@ function send_enrolling_email($to, $hash){
 	global $_SMTP_HOST;
 	global $_SMTP_USERNAME;
 	global $_SMTP_PASSWORD;
-	global $VOTE_END_DATE;
+	global $VOTE_END_DATE_STRING;
 
 	$message ="Bonjour ".get_user_name().",";
-	$message.="<br><br>Les votes pour le concours photos sont ouverts jusqu'au ".$VOTE_END_DATE.". <a href=\"".$_URL."?action=vote&hash=".$hash."\">Voici votre lien personnel de vote.</a>";
+	$message.="<br><br>Les votes pour le concours photos sont ouverts jusqu'au ".$VOTE_END_DATE_STRING.". <a href=\"".$_URL."?action=vote&hash=".$hash."\">Voici votre lien personnel de vote.</a>";
 
 	if (get_admin_status()==True) {
-		$message.="<br><br><b>Vous êtes administrateur :</b>";
+		$message.="<br><br><b>Vous etes administrateur :</b>";
 		$message.="<br><a href=\"".$_URL."?action=list_results&hash=".$hash."\">Voir l'historique des votes.</a>";
 		$message.="<br><a href=\"".$_URL."?action=count_results&hash=".$hash."\">Voir le classement.</a>";
 	}
@@ -218,7 +229,7 @@ function add_vote(){
 
 /***************** VIEW *****************/
 function display_form(){
-	global $_URL, $_VOTE_LIMIT, $nb_photos, $_PHOTO_DIRECTORY, $VOTE_END_DATE;;
+	global $_URL, $_VOTE_LIMIT, $nb_photos, $_PHOTO_DIRECTORY, $VOTE_END_DATE_STRING;
 
 echo '<html>
 <head>
@@ -243,7 +254,7 @@ echo '<html>
 	</script>';
 
 	if (get_admin_status()==True) {
-		echo '<br><br><b>Vous êtes administrateur :</b>
+		echo '<br><br><b>Menu administrateur :</b>
 		<br><a href="'.$_URL.'?action=list_results&hash='.get_session_hash().'">Voir l\'historique des votes.</a>
 		<br><a href="'.$_URL.'?action=count_results&hash='.get_session_hash().'">Voir le classement.</a>
 		<br><br>';
@@ -255,7 +266,7 @@ echo '<html>
 	Bonjour '.get_user_name().' !<br>
 	Sélectionne exactement '.strval($_VOTE_LIMIT).' photos (vote non ordonné) en cochant la case à droite de la photo, et valide le formulaire en bas de page.
     <br>Tu peux voter pour ta photo, même si ce n\'est pas très fair-play.
-	<br>Le vote est ouvert jusqu\'au '.$VOTE_END_DATE.'. Tu peux voter plusieurs fois. L\'historique de tes votes est conservé. Seul ton dernier vote sera pris en compte lors du dépouillement.
+	<br>Le vote est ouvert jusqu\'au '.$VOTE_END_DATE_STRING.'. Tu peux voter plusieurs fois. L\'historique de tes votes est conservé. Seul ton dernier vote sera pris en compte lors du dépouillement.
 	<br><br>
 	<table>';
 
