@@ -62,6 +62,7 @@ function get_user_name(){
 
 
 init_user_list();
+//var_dump($_USERS);
 
 /***************** CONTROLER *****************/
 /*
@@ -121,14 +122,9 @@ function send_enrolling_email($to, $hash){
 	global $_SMTP_PASSWORD;
 	global $VOTE_END_DATE_STRING;
 
-	$message ="Bonjour ".get_user_name().",";
+	$message ="Bonjour,";
 	$message.="<br><br>Les votes pour le concours photos sont ouverts jusqu'au ".$VOTE_END_DATE_STRING.". <a href=\"".$_URL."?action=vote&hash=".$hash."\">Voici votre lien personnel de vote.</a>";
 
-	if (get_admin_status()==True) {
-		$message.="<br><br><b>Vous etes administrateur :</b>";
-		$message.="<br><a href=\"".$_URL."?action=list_results&hash=".$hash."\">Voir l'historique des votes.</a>";
-		$message.="<br><a href=\"".$_URL."?action=count_results&hash=".$hash."\">Voir le classement.</a>";
-	}
 	$message.="<br><br>Cordialement.<br>La FunTeam";
 	require_once 'PHPMailer/PHPMailerAutoload.php';
 
@@ -153,11 +149,14 @@ function send_enrolling_email($to, $hash){
 			'allow_self_signed' => true
 		)
 	);
+
 	if(!$mail->send()) {
 		echo '<br>Message could not be sent.';
 		echo '<br>Mailer Error: ' . $mail->ErrorInfo;
 	} else {
 		echo '<br>Message has been sent to '.$to;
+		echo $message;
+		echo "==============================";
 	}
 }
 
